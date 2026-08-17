@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales Trainer</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html,body { height:100%; }
+body { margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#eef1f6; color:#1a1f29; }
+.wrap { max-width:760px; margin:0 auto; display:flex; flex-direction:column; height:100dvh; padding:10px; }
+.head { background:linear-gradient(135deg,#1f4e79,#2e6db4); color:#fff; border-radius:14px; padding:12px 16px; box-shadow:0 2px 10px rgba(0,0,0,.12); position:relative; }
+.head a.back { position:absolute; top:12px; right:14px; color:#fff; text-decoration:none; font-size:12px; opacity:.9; }
+.head h1 { margin:0; font-size:18px; }
+.head p { margin:4px 0 0; font-size:12px; opacity:.92; padding-right:60px; }
+.badge { display:inline-block; background:rgba(255,255,255,.18); border-radius:20px; padding:2px 10px; font-size:11px; margin-top:7px; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 6px; }
+.chip { background:#fff; border:1px solid #d5deea; color:#1f4e79; border-radius:20px; padding:7px 12px; font-size:12px; cursor:pointer; }
+.chip:active { background:#1f4e79; color:#fff; }
+#log { flex:1; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:10px; }
+.msg { max-width:85%; padding:10px 13px; border-radius:14px; font-size:14px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; }
+.user { align-self:flex-end; background:#1f4e79; color:#fff; border-bottom-right-radius:4px; }
+.bot  { align-self:flex-start; background:#fff; border:1px solid #e2e8f1; border-bottom-left-radius:4px; }
+.bot b { color:#1f4e79; }
+.who { font-size:10px; text-transform:uppercase; letter-spacing:.5px; opacity:.6; margin-bottom:3px; }
+.typing { align-self:flex-start; font-size:13px; font-style:italic; color:#6b7686; padding:2px 6px; }
+.err { background:#fff4f4; border:1px solid #f3c6c6; color:#9a2b2b; }
+.inbar { display:flex; gap:8px; padding-top:8px; }
+#box { flex:1; border:1px solid #cdd7e3; border-radius:22px; padding:11px 15px; font-size:15px; resize:none; font-family:inherit; outline:none; }
+#box:focus { border-color:#2e6db4; }
+#send { background:#1f4e79; color:#fff; border:none; border-radius:22px; padding:0 20px; font-size:14px; cursor:pointer; }
+#send:disabled { opacity:.5; }
+.note { font-size:11px; color:#7a8494; text-align:center; padding:5px 0 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <a class="back" href="index.html">◀ Switch</a>
+    <h1 id="title">Sales Guru</h1>
+    <p id="subtitle">Trained on real sales calls. Talk in Tamil or English.</p>
+    <span class="badge" id="badge"></span>
+  </div>
+  <div class="chips" id="chips">
+    <div class="chip" data-q="Roleplay a customer who says a competitor quoted ₹520 when we quoted ₹540. I'll try to handle it.">Roleplay: competitor undercut</div>
+    <div class="chip" data-q="Quiz me on the brand ladder and warranty.">Quiz: brand ladder</div>
+    <div class="chip" data-q="A Google lead wants a rate for 1000 sq ft. Walk me through the ideal call.">Ideal rate-enquiry call</div>
+    <div class="chip" data-q="Roleplay a bulk dealer negotiating coil rates and credit terms.">Roleplay: bulk dealer</div>
+  </div>
+  <div id="log"></div>
+  <div class="inbar">
+    <textarea id="box" rows="1" placeholder="Type in Tamil or English…"></textarea>
+    <button id="send">Send</button>
+  </div>
+  <div class="note">Practice tool • answers come from real call transcripts • confirm exact prices with your manager</div>
+</div>
+<script>
+const params=new URLSearchParams(location.search);
+let company=(params.get('c')||'crayon').toLowerCase();
+if(company!=='bsc'&&company!=='crayon')company='crayon';
+const LABEL = company==='bsc' ? 'BSC' : 'Crayon';
+const FULL  = company==='bsc' ? 'BSC (Bharat Steel Group)' : 'Crayon Roofing & Structures';
+document.title = LABEL+' Sales Guru';
+document.getElementById('title').textContent='🎙️ '+LABEL+' Sales Guru';
+document.getElementById('subtitle').textContent='Tamil sales trainer for '+FULL+' — talk in Tamil or English.';
+document.getElementById('badge').textContent = company==='bsc' ? 'Shared roofing knowledge · BSC calls pending' : 'Trained on 129 real Crayon calls';
+
+const log=document.getElementById('log'), box=document.getElementById('box'), send=document.getElementById('send');
+let messages=[]; let busy=false;
+function escp(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function md(s){return escp(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function bubble(text,who){
+  const d=document.createElement('div'); d.className='msg '+(who==='user'?'user':'bot');
+  const l=document.createElement('div'); l.className='who'; l.textContent=who==='user'?'You':LABEL+' Sales Guru';
+  const b=document.createElement('div'); b.innerHTML=who==='bot'?md(text):escp(text);
+  d.appendChild(l); d.appendChild(b); log.appendChild(d); log.scrollTop=log.scrollHeight; return d;
+}
+async function submit(text){
+  if(busy||!text.trim())return; busy=true; send.disabled=true;
+  bubble(text,'user'); messages.push({role:'user',content:text});
+  box.value=''; box.style.height='auto';
+  const t=document.createElement('div'); t.className='typing'; t.textContent=LABEL+' Sales Guru is thinking…';
+  log.appendChild(t); log.scrollTop=log.scrollHeight;
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company,messages})});
+    const data=await res.json(); t.remove();
+    if(!res.ok||data.error){ const d=bubble('Sorry, something went wrong: '+(data.error||res.status),'bot'); d.classList.add('err'); }
+    else { bubble(data.reply,'bot'); messages.push({role:'assistant',content:data.reply}); if(messages.length>16)messages=messages.slice(-16); }
+  }catch(e){ t.remove(); const d=bubble('Network error — check your connection and try again.','bot'); d.classList.add('err'); }
+  finally{ busy=false; send.disabled=false; box.focus(); }
+}
+document.getElementById('chips').addEventListener('click',e=>{const c=e.target.closest('.chip'); if(c)submit(c.getAttribute('data-q'));});
+send.addEventListener('click',()=>submit(box.value));
+box.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit(box.value);}});
+box.addEventListener('input',()=>{box.style.height='auto';box.style.height=Math.min(box.scrollHeight,120)+'px';});
+bubble("வணக்கம்! 👋 I'm "+LABEL+" Sales Guru — trained on real sales calls. Ask me how to handle any customer situation, or tap a button above to practise.",'bot');
+</script>
+</body>
+</html>
