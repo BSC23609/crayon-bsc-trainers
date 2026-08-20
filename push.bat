@@ -26,7 +26,7 @@ if errorlevel 1 (
   echo     git remote add origin https://github.com/YOUR-USER/YOUR-REPO.git
   echo     git push -u origin main
   echo.
-  pause
+  if not "%NOPAUSE%"=="1" pause
   exit /b 1
 )
 
@@ -35,10 +35,10 @@ echo === 3/3  Deploying to Vercel (production) ===
 call vercel --prod
 if errorlevel 1 (
   echo [!] Vercel deploy failed - see the message above.
-  pause
+  if not "%NOPAUSE%"=="1" pause
   exit /b 1
 )
 
 echo.
 echo === Done. GitHub updated and site redeployed. ===
-pause
+if not "%NOPAUSE%"=="1" pause
