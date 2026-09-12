@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Insights</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#eef1f6;color:#1a1f29}
+.wrap{max-width:1080px;margin:0 auto;padding:14px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:linear-gradient(135deg,#1f4e79,#2e6db4);color:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.top h1{margin:0;font-size:20px;flex:1}
+.top a.back{color:#fff;text-decoration:none;font-size:13px;opacity:.9}
+.toggle{display:flex;background:rgba(255,255,255,.15);border-radius:20px;padding:3px}
+.toggle button{background:none;border:none;color:#fff;padding:6px 16px;border-radius:18px;cursor:pointer;font-size:13px}
+.toggle button.on{background:#fff;color:#1f4e79;font-weight:600}
+.upd{font-size:11px;color:#5a6473;text-align:right;margin:6px 2px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.kpi{background:#fff;border:1px solid #e2e8f1;border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:12px;color:#6b7686}
+.kpi .v{font-size:24px;font-weight:600;color:#1f4e79;margin-top:3px;line-height:1.1}
+.kpi .s{font-size:11px;color:#8a94a3;margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.card{background:#fff;border:1px solid #e2e8f1;border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 10px;font-size:14px;color:#1f4e79}
+.chartbox{position:relative;height:240px}
+.empty{background:#fff;border:1px dashed #cbd5e6;border-radius:12px;padding:40px;text-align:center;color:#6b7686;font-size:14px}
+.foot{font-size:11px;color:#8a94a3;text-align:center;padding:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>📊 Customer Insights</h1>
+    <div class="toggle" id="toggle">
+      <button data-c="bsc">BSC</button>
+      <button data-c="crayon">Crayon</button>
+    </div>
+    <a class="back" href="index.html">◀ Home</a>
+  </div>
+  <div class="upd" id="upd"></div>
+  <div id="kpis" class="kpis"></div>
+  <div id="body"></div>
+  <div class="foot">Auto-built from analysed sales calls • updates each week • confirm specifics with your team</div>
+</div>
+<script>
+var params=new URLSearchParams(location.search);
+var company=(params.get('c')||'crayon').toLowerCase();
+if(company!=='bsc'&&company!=='crayon')company='crayon';
+var charts=[];
+var PAL=['#2e6db4','#1f9e75','#e0a11b','#d85a30','#8a63d2','#d4537e','#0f9d9d','#6b7686','#639922','#c0392b'];
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function kpi(l,v,s){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';}
+function pct(a,b){return b?Math.round(100*a/b)+'%':'—';}
+function destroyCharts(){charts.forEach(function(c){try{c.destroy();}catch(e){}});charts=[];}
+
+function card(title){
+  var c=el('div','card');c.appendChild(el('h3',null,title));
+  var box=el('div','chartbox');var cv=document.createElement('canvas');box.appendChild(cv);c.appendChild(box);
+  return {card:c,canvas:cv};
+}
+function mkBar(cv,labels,data,horizontal,colors){
+  charts.push(new Chart(cv,{type:'bar',data:{labels:labels,datasets:[{data:data,backgroundColor:colors||'#2e6db4',borderRadius:5}]},
+    options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:!horizontal}},y:{grid:{display:horizontal}}}}}));
+}
+function mkDoughnut(cv,labels,data,colors){
+  charts.push(new Chart(cv,{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11}}}}}}));
+}
+function mkLine(cv,labels,datasets){
+  charts.push(new Chart(cv,{type:'line',data:{labels:labels,datasets:datasets},
+    options:{responsive:true,maintainAspectRatio:false,tension:.3,plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},
+      scales:{y:{beginAtZero:true}}}}));
+}
+function nice(s){return String(s).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
+
+function render(d){
+  destroyCharts();
+  var body=document.getElementById('body'), kpis=document.getElementById('kpis');
+  document.getElementById('upd').textContent = d.generated_at ? ('Last updated '+d.generated_at+' • '+(d.new_this_run||0)+' new since last run') : '';
+  if(!d.total_calls){
+    kpis.innerHTML='';
+    body.innerHTML='<div class="empty">No analysed sales calls yet for <b>'+company.toUpperCase()+'</b>.<br>The dashboard fills automatically after the next weekly run processes new calls.</div>';
+    return;
+  }
+  var s=d.sentiment||{}, o=d.outcomes||{};
+  var win=(o.order||0)+(o.interested||0);
+  kpis.innerHTML =
+    kpi('Sales calls analysed', d.total_calls) +
+    kpi('Positive sentiment', pct(s.positive||0,d.total_calls), (s.positive||0)+' of '+d.total_calls) +
+    kpi('Price is the blocker', (d.price_blocker_pct||0)+'%') +
+    kpi('Interested / ordered', pct(win,d.total_calls)) +
+    kpi('Top product asked', (d.top_products&&d.top_products[0]?d.top_products[0].name:'—')) +
+    kpi('Top objection', (d.top_objections&&d.top_objections[0]?nice(d.top_objections[0].name):'—'));
+
+  body.innerHTML='';
+  var grid=el('div','grid');body.appendChild(grid);
+
+  // Sentiment over time
+  if((d.sentiment_by_week||[]).length){
+    var c=card('Sentiment over time');grid.appendChild(c.card);
+    var wk=d.sentiment_by_week;
+    mkLine(c.canvas, wk.map(function(w){return w.week;}), [
+      {label:'Positive',data:wk.map(function(w){return w.positive;}),borderColor:'#1f9e75',backgroundColor:'#1f9e75'},
+      {label:'Neutral',data:wk.map(function(w){return w.neutral;}),borderColor:'#e0a11b',backgroundColor:'#e0a11b'},
+      {label:'Negative',data:wk.map(function(w){return w.negative;}),borderColor:'#c0392b',backgroundColor:'#c0392b'}
+    ]);
+  }
+  // Sentiment split
+  var c2=card('Sentiment split');grid.appendChild(c2.card);
+  mkDoughnut(c2.canvas,['Positive','Neutral','Negative'],[s.positive||0,s.neutral||0,s.negative||0],['#1f9e75','#e0a11b','#c0392b']);
+
+  // Top products (demand)
+  if((d.top_products||[]).length){
+    var c3=card('What customers ask for (demand)');grid.appendChild(c3.card);
+    mkBar(c3.canvas,d.top_products.map(function(x){return x.name;}),d.top_products.map(function(x){return x.count;}),true,'#2e6db4');
+  }
+  // Top objections
+  if((d.top_objections||[]).length){
+    var c4=card('Top objections / barriers');grid.appendChild(c4.card);
+    mkBar(c4.canvas,d.top_objections.map(function(x){return nice(x.name);}),d.top_objections.map(function(x){return x.count;}),true,'#d85a30');
+  }
+  // Intent
+  var ik=Object.keys(d.intent||{});
+  if(ik.length){
+    var c5=card('Why they call (intent)');grid.appendChild(c5.card);
+    mkBar(c5.canvas,ik.map(nice),ik.map(function(k){return d.intent[k];}),false,'#8a63d2');
+  }
+  // Outcomes
+  var ok=Object.keys(o);
+  if(ok.length){
+    var c6=card('Call outcomes');grid.appendChild(c6.card);
+    mkDoughnut(c6.canvas,ok.map(nice),ok.map(function(k){return o[k];}),PAL);
+  }
+  // Segments
+  if((d.segments||[]).length){
+    var c7=card('Customer segments');grid.appendChild(c7.card);
+    mkBar(c7.canvas,d.segments.map(function(x){return nice(x.name);}),d.segments.map(function(x){return x.count;}),false,'#0f9d9d');
+  }
+  // Competitors
+  if((d.competitors||[]).length){
+    var c8=card('Competitors mentioned');grid.appendChild(c8.card);
+    mkBar(c8.canvas,d.competitors.map(function(x){return x.name;}),d.competitors.map(function(x){return x.count;}),true,'#d4537e');
+  }
+  // Regions
+  if((d.regions||[]).length){
+    var c9=card('Where customers are (regions)');grid.appendChild(c9.card);
+    mkBar(c9.canvas,d.regions.map(function(x){return x.name;}),d.regions.map(function(x){return x.count;}),true,'#639922');
+  }
+}
+
+function load(){
+  document.querySelectorAll('#toggle button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-c')===company);});
+  fetch('/api/analytics?company='+company).then(function(r){return r.json();}).then(render)
+    .catch(function(){document.getElementById('body').innerHTML='<div class="empty">Could not load insights. Try again.</div>';});
+}
+document.getElementById('toggle').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;company=b.getAttribute('data-c');
+  history.replaceState(null,'','?c='+company);load();
+});
+load();
+</script>
+</body>
+</html>
