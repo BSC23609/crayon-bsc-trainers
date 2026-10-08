@@ -34,6 +34,43 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;b
 .chartbox{position:relative;height:240px}
 .empty{background:#fff;border:1px dashed #cbd5e6;border-radius:12px;padding:40px;text-align:center;color:#6b7686;font-size:14px}
 .foot{font-size:11px;color:#8a94a3;text-align:center;padding:14px}
+.sec{margin:22px 2px 8px;font-size:15px;color:#1f4e79;font-weight:600}
+.sec small{font-weight:400;color:#6b7686;font-size:12px;margin-left:6px}
+.note{font-size:11px;color:#8a94a3;margin-top:8px}
+.plan{background:#fff;border:1px solid #e2e8f1;border-radius:12px;padding:0;overflow:hidden}
+.plan .head{padding:14px 16px;background:#f5f8fc;border-bottom:1px solid #e2e8f1;font-size:14px;line-height:1.45}
+.plan .tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px 0}
+.plan .tabs button{border:1px solid #cfd9e8;background:#fff;color:#1f4e79;border-radius:18px;padding:6px 13px;font-size:12.5px;cursor:pointer}
+.plan .tabs button.on{background:#1f4e79;color:#fff;border-color:#1f4e79}
+.plan .pane{padding:12px 16px 16px}
+.item{border-left:3px solid #2e6db4;padding:8px 12px;margin:0 0 10px;background:#fbfcfe;border-radius:0 8px 8px 0}
+.item b{display:block;font-size:13.5px;color:#1a1f29;margin-bottom:3px}
+.item div{font-size:12.5px;color:#4a5462;line-height:1.45}
+.item div span{color:#1f4e79;font-weight:600}
+.obs{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:#33404f}
+.obs li{margin-bottom:6px}
+/* Ask Insights chat */
+.askbtn{position:fixed;right:18px;bottom:18px;z-index:50;background:#1f4e79;color:#fff;border:none;border-radius:26px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.22);cursor:pointer}
+.askbtn:hover{background:#2e6db4}
+.chat{position:fixed;right:18px;bottom:18px;z-index:60;width:min(410px,calc(100vw - 24px));height:min(600px,calc(100vh - 36px));background:#fff;border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden}
+.chat.open{display:flex}
+.chat .ch{background:linear-gradient(135deg,#1f4e79,#2e6db4);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:8px}
+.chat .ch b{flex:1;font-size:15px}
+.chat .ch small{display:block;font-weight:400;font-size:11px;opacity:.85}
+.chat .ch button{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px}
+.chat .log{flex:1;overflow-y:auto;padding:12px;background:#f4f6fa;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13.5px;line-height:1.5;white-space:normal;word-wrap:break-word}
+.msg.u{align-self:flex-end;background:#1f4e79;color:#fff;border-bottom-right-radius:4px}
+.msg.a{align-self:flex-start;background:#fff;border:1px solid #e2e8f1;color:#1a1f29;border-bottom-left-radius:4px}
+.msg.a ul{margin:4px 0;padding-left:18px}
+.msg.err{background:#fdecea;border-color:#f5c6c0;color:#8a2c20}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid #e2e8f1;background:#fff}
+.chips button{border:1px solid #cfd9e8;background:#f5f8fc;color:#1f4e79;border-radius:16px;padding:5px 10px;font-size:12px;cursor:pointer}
+.chat form,.chat .in{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e2e8f1;background:#fff}
+.chat textarea{flex:1;resize:none;border:1px solid #cfd9e8;border-radius:10px;padding:8px 10px;font:inherit;font-size:13.5px;height:40px;max-height:110px}
+.chat .send{background:#1f4e79;color:#fff;border:none;border-radius:10px;padding:0 14px;font-weight:600;cursor:pointer}
+.chat .send:disabled{opacity:.5;cursor:default}
+.typing{color:#6b7686;font-size:12px;font-style:italic}
 </style>
 </head>
 <body>
@@ -51,7 +88,14 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;b
   <div class="upd" id="upd"></div>
   <div id="kpis" class="kpis"></div>
   <div id="body"></div>
-  <div class="foot">Auto-built from analysed sales calls • updates each week • confirm specifics with your team</div>
+  <div class="foot">Auto-built by AI from recorded sales calls • updates daily • action-plan ideas are suggestions to evaluate, confirm specifics with your team</div>
+</div>
+<button class="askbtn" id="askbtn" type="button">Ask Insights</button>
+<div class="chat" id="chat" role="dialog" aria-label="Ask Insights">
+  <div class="ch"><b>Ask Insights<small id="chatco">Answers from analysed calls</small></b><button type="button" id="chatclear" title="New chat">↺</button><button type="button" id="chatclose" title="Close">✕</button></div>
+  <div class="log" id="log"></div>
+  <div class="chips" id="chips"></div>
+  <div class="in"><textarea id="q" placeholder="Ask in English or Tamil..."></textarea><button class="send" id="send" type="button">Send</button></div>
 </div>
 <script>
 var params=new URLSearchParams(location.search);
@@ -103,7 +147,10 @@ function render(d){
     kpi('Price is the blocker', (d.price_blocker_pct||0)+'%') +
     kpi('Interested / ordered', pct(win,d.total_calls)) +
     kpi('Top product asked', (d.top_products&&d.top_products[0]?d.top_products[0].name:'—')) +
-    kpi('Top objection', (d.top_objections&&d.top_objections[0]?nice(d.top_objections[0].name):'—'));
+    kpi('Top objection', (d.top_objections&&d.top_objections[0]?nice(d.top_objections[0].name):'—')) +
+    (d.v2_calls ? kpi('Satisfied with our call', pct((d.call_satisfaction||{}).satisfied||0,d.v2_calls), 'of '+d.v2_calls+' calls') +
+      kpi('Accepted our price', pct((d.price_reaction||{}).accepted||0, d.v2_calls-((d.price_reaction||{}).not_discussed||0)), 'where price came up') +
+      kpi('Ordered on the call', (d.order_pct||0)+'%') : '');
 
   body.innerHTML='';
   var grid=el('div','grid');body.appendChild(grid);
@@ -159,6 +206,86 @@ function render(d){
     var c9=card('Where customers are (regions)');grid.appendChild(c9.card);
     mkBar(c9.canvas,d.regions.map(function(x){return x.name;}),d.regions.map(function(x){return x.count;}),true,'#639922');
   }
+  renderV2(d, body);
+  renderPlan(d, body);
+}
+
+function section(body,title,sub){body.appendChild(el('div','sec',title+(sub?'<small>'+sub+'</small>':'')));var g=el('div','grid');body.appendChild(g);return g;}
+function addNote(c,t){c.card.appendChild(el('div','note',t));}
+
+function renderV2(d, body){
+  if(!d.v2_calls){
+    body.appendChild(el('div','sec','Satisfaction, behaviour & conversion'));
+    body.appendChild(el('div','empty','These charts fill in after the next daily run re-analyses calls with the new questions.'));
+    return;
+  }
+  var base='based on '+d.v2_calls+' calls';
+  var g=section(body,'Are customers satisfied with our calls and our price?',base);
+  var cs=d.call_satisfaction||{}, ck=['satisfied','neutral','dissatisfied','unknown'].filter(function(k){return cs[k];});
+  if(ck.length){var a=card('Satisfied with how we handled the call?');g.appendChild(a.card);
+    mkDoughnut(a.canvas,ck.map(nice),ck.map(function(k){return cs[k];}),['#1f9e75','#e0a11b','#c0392b','#b8c1cc']);}
+  var pr=d.price_reaction||{}, pk=['accepted','negotiating','too_high','not_discussed'].filter(function(k){return pr[k];});
+  if(pk.length){var b=card('Reaction to our price');g.appendChild(b.card);
+    mkDoughnut(b.canvas,pk.map(nice),pk.map(function(k){return pr[k];}),['#1f9e75','#2e6db4','#c0392b','#b8c1cc']);}
+  if((d.win_by_satisfaction||[]).length){var c=card('Satisfied customers convert better?');g.appendChild(c.card);
+    mkBar(c.canvas,d.win_by_satisfaction.map(function(x){return nice(x.name);}),d.win_by_satisfaction.map(function(x){return x.win_pct;}),false,'#1f9e75');
+    addNote(c,'% of calls ending in order or interest, by satisfaction');}
+
+  var g2=section(body,'Customer behaviour',base);
+  if((d.behaviour||[]).length){var e=card('How customers behave on calls');g2.appendChild(e.card);
+    mkBar(e.canvas,d.behaviour.map(function(x){return nice(x.name);}),d.behaviour.map(function(x){return x.count;}),true,'#8a63d2');}
+  if((d.needs||[]).length){var f=card('What they value besides price');g2.appendChild(f.card);
+    mkBar(f.canvas,d.needs.map(function(x){return nice(x.name);}),d.needs.map(function(x){return x.count;}),true,'#0f9d9d');}
+
+  var g3=section(body,'Where we can improve conversion');
+  if((d.rep_missed||[]).length){var h=card('Where we lose the sale on the call');g3.appendChild(h.card);
+    mkBar(h.canvas,d.rep_missed.map(function(x){return nice(x.name);}),d.rep_missed.map(function(x){return x.count;}),true,'#d85a30');
+    addNote(h,'What the salesperson could have done better, '+base);}
+  if((d.win_by_segment||[]).length){var i=card('Conversion by customer type');g3.appendChild(i.card);
+    mkBar(i.canvas,d.win_by_segment.map(function(x){return nice(x.name)+' ('+x.calls+')';}),d.win_by_segment.map(function(x){return x.win_pct;}),true,'#2e6db4');
+    addNote(i,'% of calls ending in order or interest (call count in brackets)');}
+  if((d.win_by_objection||[]).length){var j=card('Conversion when this objection comes up');g3.appendChild(j.card);
+    mkBar(j.canvas,d.win_by_objection.map(function(x){return nice(x.name)+' ('+x.calls+')';}),d.win_by_objection.map(function(x){return x.win_pct;}),true,'#e0a11b');
+    addNote(j,'Low bars are the objections reps most need help handling');}
+  var wk=(d.sentiment_by_week||[]).filter(function(w){return w.total;});
+  if(wk.length>1){var k=card('Conversion trend by week');g3.appendChild(k.card);
+    mkLine(k.canvas,wk.map(function(w){return w.week;}),[
+      {label:'Order or interested %',data:wk.map(function(w){return Math.round(100*(w.won||0)/w.total);}),borderColor:'#2e6db4',backgroundColor:'#2e6db4'},
+      {label:'Ordered %',data:wk.map(function(w){return Math.round(100*(w.orders||0)/w.total);}),borderColor:'#1f9e75',backgroundColor:'#1f9e75'}]);}
+}
+
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function items(arr,fields){
+  if(!arr||!arr.length)return '<div class="note">Nothing yet.</div>';
+  return arr.map(function(x){
+    if(typeof x==='string')return '<div class="item"><div>'+esc(x)+'</div></div>';
+    var h='<div class="item"><b>'+esc(x.title||x.question||'')+'</b>';
+    fields.forEach(function(f){if(x[f[0]])h+='<div><span>'+f[1]+':</span> '+esc(x[f[0]])+'</div>';});
+    return h+'</div>';
+  }).join('');
+}
+function list(arr){return arr&&arr.length?'<ul class="obs">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'<div class="note">Nothing yet.</div>';}
+
+function renderPlan(d, body){
+  var p=d.recommendations;
+  body.appendChild(el('div','sec','Action plan'+(d.recommendations_at?'<small>generated '+d.recommendations_at+' from the call data</small>':'')));
+  if(!p){body.appendChild(el('div','empty','The action plan is generated by the next daily run.'));return;}
+  var tabs=[
+    ['Improve conversion',function(){return items(p.conversion,[['evidence','Evidence'],['action','Do this']]);}],
+    ['What we can offer',function(){return items(p.offers,[['for_whom','For'],['why','Why']]);}],
+    ['Loyalty beyond price',function(){return items(p.loyalty,[['how','How'],['why','Why']]);}],
+    ['Non-price benefits',function(){return items(p.non_price_benefits,[['why','Why']]);}],
+    ['Customer behaviour',function(){return '<div class="sec" style="margin-top:0">Behaviour</div>'+list(p.behaviour)+'<div class="sec">Satisfaction with calls & price</div>'+list(p.satisfaction);}],
+    ['Top customer questions',function(){return items(p.top_questions,[['answer_tip','How to answer']]);}]
+  ];
+  var box=el('div','plan');
+  box.innerHTML=(p.headline?'<div class="head"><b>Key finding:</b> '+esc(p.headline)+'</div>':'')+'<div class="tabs"></div><div class="pane"></div>';
+  var tb=box.querySelector('.tabs'), pane=box.querySelector('.pane');
+  tabs.forEach(function(t,i){var b=el('button',i?'':'on',t[0]);b.type='button';
+    b.onclick=function(){tb.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');pane.innerHTML=t[1]();};
+    tb.appendChild(b);});
+  pane.innerHTML=tabs[0][1]();
+  body.appendChild(box);
 }
 
 function load(){
@@ -174,6 +301,47 @@ document.getElementById('toggle').addEventListener('click',function(e){
   history.replaceState(null,'','?c='+company);load();
 });
 load();
+
+// ===== Ask Insights chat =====
+var chatHist={bsc:[],crayon:[]}, busy=false;
+var CHIPS=['Are customers satisfied with our calls and price?','How can we improve our conversion rate?','What can we offer customers besides price?','Loyalty ideas other than price','Why do fabricators not convert?','Which objection costs us the most orders?'];
+function md(t){
+  var h=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  var lines=h.split(/\n/), out='', inl=false;
+  lines.forEach(function(l){var m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
+    if(m){if(!inl){out+='<ul>';inl=true;}out+='<li>'+m[1]+'</li>';}
+    else{if(inl){out+='</ul>';inl=false;}out+=(l.trim()?l+'<br>':'<br>');}});
+  if(inl)out+='</ul>';return out.replace(/(<br>)+$/,'');
+}
+function addMsg(role,text,cls){var m=el('div','msg '+(role==='user'?'u':'a')+(cls?' '+cls:''));
+  m.innerHTML=role==='user'?esc(text):md(text);var log=document.getElementById('log');log.appendChild(m);log.scrollTop=log.scrollHeight;return m;}
+function drawChat(){
+  document.getElementById('chatco').textContent='Answers from analysed '+(company==='bsc'?'BSC':'Crayon')+' calls';
+  var log=document.getElementById('log');log.innerHTML='';
+  if(!chatHist[company].length)addMsg('assistant','Ask me anything about '+(company==='bsc'?'BSC':'Crayon')+' customers: satisfaction, behaviour, objections, conversion, or what we could offer them. Answers come from the analysed calls.');
+  chatHist[company].forEach(function(m){addMsg(m.role,m.content);});
+  var ch=document.getElementById('chips');ch.innerHTML='';ch.style.display=chatHist[company].length?'none':'';
+  CHIPS.forEach(function(c){var b=el('button',null,esc(c));b.type='button';b.onclick=function(){ask(c);};ch.appendChild(b);});
+}
+function ask(text){
+  text=(text||'').trim();if(!text||busy)return;
+  busy=true;document.getElementById('send').disabled=true;document.getElementById('q').value='';
+  var hist=chatHist[company];hist.push({role:'user',content:text});addMsg('user',text);document.getElementById('chips').style.display='none';
+  var t=addMsg('assistant','Analysing calls...','typing');var co=company;
+  fetch('/api/insights-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:co,messages:hist})})
+    .then(function(r){return r.json();})
+    .then(function(j){t.remove();
+      if(j.reply){chatHist[co].push({role:'assistant',content:j.reply});if(co===company)addMsg('assistant',j.reply);}
+      else{hist.pop();addMsg('assistant',j.error||'Something went wrong. Please try again.','err');}})
+    .catch(function(){t.remove();hist.pop();addMsg('assistant','Could not reach the server. Check your connection and try again.','err');})
+    .then(function(){busy=false;document.getElementById('send').disabled=false;});
+}
+document.getElementById('askbtn').onclick=function(){document.getElementById('chat').classList.add('open');this.style.display='none';drawChat();document.getElementById('q').focus();};
+document.getElementById('chatclose').onclick=function(){document.getElementById('chat').classList.remove('open');document.getElementById('askbtn').style.display='';};
+document.getElementById('chatclear').onclick=function(){chatHist[company]=[];drawChat();};
+document.getElementById('send').onclick=function(){ask(document.getElementById('q').value);};
+document.getElementById('q').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(this.value);}});
+document.getElementById('toggle').addEventListener('click',function(){if(document.getElementById('chat').classList.contains('open'))setTimeout(drawChat,0);});
 </script>
 </body>
 </html>
