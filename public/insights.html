@@ -30,6 +30,15 @@ body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-
 .ghost{border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer;text-decoration:none}
 .ghost:hover{background:rgba(255,255,255,.26)}
 .meta{color:var(--muted);font-size:12px;margin:8px 2px 0;text-align:right}
+.bar2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.bar2 .meta{margin:0}
+.reptabs{display:flex;flex-wrap:wrap;gap:6px}
+.reptabs:empty{display:none}
+.reptabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font:inherit;font-size:13.5px;padding:8px 16px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.reptabs button small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.reptabs button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.reptabs button.on small{color:rgba(255,255,255,.8)}
+.repnote{margin-top:10px;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
 /* hero */
 .hero{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,1.6fr);gap:16px;margin-top:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
@@ -126,7 +135,7 @@ h2 small{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:6px}
     <button class="ghost" id="refresh" type="button">Refresh</button>
     <a class="ghost" href="index.html">Home</a>
   </div>
-  <div class="meta" id="meta"></div>
+  <div class="bar2"><div class="reptabs" id="reptabs" role="tablist" aria-label="Sales rep"></div><div class="meta" id="meta"></div></div>
   <div id="body"></div>
   <div class="foot">Built by AI from recorded sales calls and updated daily. Action-plan ideas are suggestions to evaluate; confirm specifics with your team.</div>
 </div>
@@ -144,6 +153,10 @@ h2 small{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:6px}
 var params=new URLSearchParams(location.search);
 var company=(params.get('c')||'crayon').toLowerCase(); if(company!=='bsc'&&company!=='crayon')company='crayon';
 var NAME={bsc:'BSC',crayon:'Crayon'};
+var REPS={bsc:['Varsha','Venkatesh']};
+var rep=params.get('r')||''; rep=rep?rep.charAt(0).toUpperCase()+rep.slice(1).toLowerCase():'';
+var lastData=null;
+function who(){return rep?rep+'\u2019s':NAME[company];}
 var LABEL={price_high:'Price too high',competitor_cheaper:'Competitor is cheaper',credit_terms:'Credit terms',delivery_time:'Delivery time',quality_doubt:'Doubts on quality',
  min_quantity:'Minimum quantity',stock_availability:'Stock availability',transport_cost:'Transport cost',
  no_follow_up_fixed:'No follow-up fixed',no_quote_sent:'Quote not sent',didnt_ask_requirement:'Did not ask full requirement',didnt_offer_alternative:'No alternative offered',
@@ -235,10 +248,32 @@ function lineChart(weeks){
 }
 
 /* ---------- page ---------- */
+function show(d){
+  lastData=d;
+  var reps=(d&&d.reps)?(REPS[company]||[]).filter(function(r){return d.reps[r];}):[];
+  if(reps.indexOf(rep)<0)rep='';
+  var tb=document.getElementById('reptabs');tb.innerHTML='';
+  if(reps.length){
+    var rc=d.rep_counts||{};
+    [''].concat(reps).forEach(function(r){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');
+      b.setAttribute('aria-selected',r===rep?'true':'false');if(r===rep)b.className='on';
+      var n=r?(rc[r]!=null?rc[r]:d.reps[r].total_calls):d.total_calls;
+      b.innerHTML=esc(r||'Overall')+' <small>'+(n||0).toLocaleString('en-IN')+'</small>';
+      b.onclick=function(){rep=r;history.replaceState(null,'','?c='+company+(rep?'&r='+rep.toLowerCase():''));show(lastData);
+        if(document.getElementById('chat').classList.contains('open'))drawChat();};tb.appendChild(b);});
+  }
+  var v=d;
+  if(rep){v=Object.assign({},d.reps[rep]);v.generated_at=v.generated_at||d.generated_at;}
+  render(v);
+  if(reps.length&&!rep&&d.rep_counts&&d.rep_counts.unsorted){
+    var note=el('<div class="repnote">Overall covers every call. '+d.rep_counts.unsorted.toLocaleString('en-IN')+' call(s) could not yet be matched to Varsha or Venkatesh, so they appear only here.</div>');
+    var body=document.getElementById('body');body.insertBefore(note,body.firstChild);
+  }
+}
 function render(d){
   var body=document.getElementById('body');body.innerHTML='';
   document.getElementById('meta').textContent=d.generated_at?('Updated '+fmtDate(d.generated_at)+' · '+(d.new_this_run||0)+' new calls in the last run'):'';
-  if(!d.total_calls){body.innerHTML='<div class="empty" style="margin-top:14px">No analysed sales calls yet for '+NAME[company]+'.</div>';return;}
+  if(!d.total_calls){body.innerHTML='<div class="empty" style="margin-top:14px">No analysed sales calls yet for '+(rep?rep+' ('+NAME[company]+')':NAME[company])+'.'+(rep?' Calls appear here once they are sorted by rep.':'')+'</div>';return;}
   var N=d.total_calls, V=d.v2_calls||0, o=d.outcomes||{}, s=d.sentiment||{}, cs=d.call_satisfaction||{}, pr=d.price_reaction||{};
   var won=(o.order||0)+(o.interested||0), winPct=pct(won,N);
   var weeks=d.sentiment_by_week||[], from=weeks.length?fmtDate(weeks[0].week):'';
@@ -247,7 +282,7 @@ function render(d){
   /* hero */
   var hero=el('<div class="hero"></div>');
   hero.appendChild(el('<div class="card"><div class="hero-num">'+winPct+'%</div>'+
-    '<div class="hero-lab">of '+NAME[company]+' sales calls end in an order or a firm interest</div>'+
+    '<div class="hero-lab">of '+who()+' sales calls end in an order or a firm interest</div>'+
     '<div class="hero-sub">Based on '+N.toLocaleString('en-IN')+' customer sales calls'+(from?', from '+from+' to '+fmtDate(d.generated_at):'')+'. Internal and empty calls are left out.</div>'+
     (plan.headline?'<div class="finding"><b>Key finding:</b> '+esc(plan.headline)+'</div>':'')+'</div>'));
   var tc=el('<div class="card"><p class="ctitle">Conversion by week</p><p class="csub">Share of sales calls ending in an order or interest. Dashed line is the average. Hover for details.</p></div>');
@@ -329,16 +364,19 @@ function renderPlan(d,body){
 function load(){
   document.querySelectorAll('#seg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-c')===company);});
   var rb=document.getElementById('refresh');rb.textContent='Loading...';
-  fetch('/api/analytics?company='+company+'&_='+Date.now()).then(function(r){return r.json();}).then(render)
+  fetch('/api/analytics?company='+company+'&_='+Date.now()).then(function(r){return r.json();}).then(show)
     .catch(function(){document.getElementById('body').innerHTML='<div class="empty" style="margin-top:14px">Could not load insights. Try Refresh.</div>';})
     .then(function(){rb.textContent='Refresh';});
 }
 document.getElementById('refresh').onclick=load;
-document.getElementById('seg').onclick=function(e){var b=e.target.closest('button');if(!b)return;company=b.getAttribute('data-c');history.replaceState(null,'','?c='+company);load();if(document.getElementById('chat').classList.contains('open'))drawChat();};
+document.getElementById('seg').onclick=function(e){var b=e.target.closest('button');if(!b)return;company=b.getAttribute('data-c');rep='';history.replaceState(null,'','?c='+company);load();if(document.getElementById('chat').classList.contains('open'))drawChat();};
 load();
 
 /* ---------- Ask Insights chat ---------- */
-var chatHist={bsc:[],crayon:[]},busy=false;
+var chatStore={},busy=false;
+function ckey(){return company+'|'+rep;}
+function hist(){return chatStore[ckey()]||(chatStore[ckey()]=[]);}
+function REPCHIPS(r){return ['Where is '+r+' losing orders?','What should '+r+' do differently on calls?','Are '+r+'\u2019s customers satisfied with the calls?','Which objections does '+r+' face most?'];}
 var CHIPS=['Are customers satisfied with our calls and price?','How can we improve our conversion rate?','What can we offer customers besides price?','Loyalty ideas other than price','Which objection costs us the most orders?'];
 function md(t){var h=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'),out='',inl=false;
   h.split(/\n/).forEach(function(l){var m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
@@ -346,23 +384,24 @@ function md(t){var h=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'),out='',inl=fal
   if(inl)out+='</ul>';return out.replace(/(<br>)+$/,'');}
 function addMsg(role,text,cls){var m=document.createElement('div');m.className='msg '+(role==='user'?'u':'a')+(cls?' '+cls:'');
   m.innerHTML=role==='user'?esc(text):md(text);var log=document.getElementById('log');log.appendChild(m);log.scrollTop=log.scrollHeight;return m;}
-function drawChat(){document.getElementById('chatco').textContent='Answers from analysed '+NAME[company]+' calls';
+function drawChat(){document.getElementById('chatco').textContent=rep?('Answers from '+rep+'\u2019s analysed calls'):('Answers from analysed '+NAME[company]+' calls');
   var log=document.getElementById('log');log.innerHTML='';
-  if(!chatHist[company].length)addMsg('assistant','Ask me anything about '+NAME[company]+' customers: satisfaction, behaviour, objections, conversion, or what we could offer them.');
-  chatHist[company].forEach(function(m){addMsg(m.role,m.content);});
-  var ch=document.getElementById('chips');ch.innerHTML='';ch.style.display=chatHist[company].length?'none':'';
-  CHIPS.forEach(function(c){var b=document.createElement('button');b.type='button';b.textContent=c;b.onclick=function(){ask(c);};ch.appendChild(b);});}
+  var H=hist();
+  if(!H.length)addMsg('assistant',rep?('Ask me anything about '+rep+'\u2019s calls: how customers respond, where '+rep+' loses orders, and what to improve.'):('Ask me anything about '+NAME[company]+' customers: satisfaction, behaviour, objections, conversion, or what we could offer them.'));
+  H.forEach(function(m){addMsg(m.role,m.content);});
+  var ch=document.getElementById('chips');ch.innerHTML='';ch.style.display=H.length?'none':'';
+  (rep?REPCHIPS(rep):CHIPS).forEach(function(c){var b=document.createElement('button');b.type='button';b.textContent=c;b.onclick=function(){ask(c);};ch.appendChild(b);});}
 function ask(text){text=(text||'').trim();if(!text||busy)return;busy=true;document.getElementById('send').disabled=true;document.getElementById('q').value='';
-  var co=company,hist=chatHist[co];hist.push({role:'user',content:text});addMsg('user',text);document.getElementById('chips').style.display='none';
+  var co=company,rp=rep,k=ckey(),H=hist();H.push({role:'user',content:text});addMsg('user',text);document.getElementById('chips').style.display='none';
   var t=addMsg('assistant','Analysing calls...','typing');
-  fetch('/api/insights-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:co,messages:hist})})
+  fetch('/api/insights-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:co,rep:rp,messages:H})})
    .then(function(r){return r.json();}).then(function(j){t.remove();
-     if(j.reply){hist.push({role:'assistant',content:j.reply});if(co===company)addMsg('assistant',j.reply);}else{hist.pop();addMsg('assistant',j.error||'Something went wrong.','err');}})
-   .catch(function(){t.remove();hist.pop();addMsg('assistant','Could not reach the server. Try again.','err');})
+     if(j.reply){H.push({role:'assistant',content:j.reply});if(k===ckey())addMsg('assistant',j.reply);}else{H.pop();addMsg('assistant',j.error||'Something went wrong.','err');}})
+   .catch(function(){t.remove();H.pop();addMsg('assistant','Could not reach the server. Try again.','err');})
    .then(function(){busy=false;document.getElementById('send').disabled=false;});}
 document.getElementById('askbtn').onclick=function(){document.getElementById('chat').classList.add('open');this.style.display='none';drawChat();document.getElementById('q').focus();};
 document.getElementById('chatclose').onclick=function(){document.getElementById('chat').classList.remove('open');document.getElementById('askbtn').style.display='';};
-document.getElementById('chatclear').onclick=function(){chatHist[company]=[];drawChat();};
+document.getElementById('chatclear').onclick=function(){chatStore[ckey()]=[];drawChat();};
 document.getElementById('send').onclick=function(){ask(document.getElementById('q').value);};
 document.getElementById('q').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(this.value);}});
 </script>
