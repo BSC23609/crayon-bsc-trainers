@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · Users</title>
+<script src="guard.js" data-need="admin"></script>
+<style>
+:root{color-scheme:light;--brand:#1f4e79;--brand2:#2e6db4;--ink:#1a1f29;--muted:#6b7686;--line:#e2e8f1;--page:#eef1f6;
+  --good:#1e7a34;--goodbg:#e6f4ea;--bad:#b42318;--badbg:#fdecea}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:16px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--brand);color:#fff;border-radius:12px;padding:10px 16px}
+.top .logo{background:#fff;border-radius:8px;padding:4px 8px;display:inline-flex}.top .logo img{height:28px;display:block}
+.top h1{margin:0;font-size:18px;font-weight:600;flex:1;min-width:150px}
+.ghost{border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer;text-decoration:none}
+.ghost:hover{background:rgba(255,255,255,.26)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 10px}
+.tabs{display:flex;gap:6px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#4b5361;font:inherit;font-size:13.5px;padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.tabs small{opacity:.75;margin-left:4px}
+.spacer{flex:1}
+.search{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font:inherit;min-width:220px;background:#fff}
+.btn{border:0;background:var(--brand);color:#fff;font:inherit;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:999px;cursor:pointer}
+.btn.sec{background:#fff;color:var(--brand);border:1px solid #c9d6e6}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1020px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);background:#fafbfd;position:sticky;top:0}
+td{padding:9px 10px;border-bottom:1px solid #f0f2f6;vertical-align:middle;font-size:13px}
+tr:hover td{background:#fafcff}
+td.emp{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#344054;white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap;color:#344054}
+.pill{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;background:#eef2f7;color:#475467;font-weight:600}
+.pill.yes{background:#e8f0fb;color:var(--brand2)}
+.st-on{color:var(--good);font-weight:600}.st-off{color:var(--bad);font-weight:600}
+.st-new{font-size:11px;color:#b54708;display:block}
+.acts{white-space:nowrap}
+.acts button{border:0;background:none;font:inherit;font-size:12.5px;padding:3px 6px;cursor:pointer;color:var(--brand2);border-radius:6px}
+.acts button:hover{background:#eef4fc}
+.acts button.danger{color:var(--bad)}.acts button.danger:hover{background:var(--badbg)}
+.acts button.good{color:var(--good)}
+tr.off td{color:#98a2b3}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin:10px 2px}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.ov.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.modal.wide{max-width:760px}
+.mh{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mh b{flex:1;font-size:16px}.mh button{border:0;background:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.mb{padding:16px 18px}
+.mf{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+.f label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:#344054}
+.f input,.f select,textarea{width:100%;font:inherit;padding:9px 11px;border:1px solid #d0d8e4;border-radius:9px;background:#fff}
+.f input:disabled{background:#f2f4f7;color:#667085}
+.checks{display:flex;gap:18px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:7px;font-weight:500;cursor:pointer}
+.err{background:var(--badbg);color:#8a2c20;border-radius:8px;padding:8px 11px;font-size:13px;margin-bottom:12px;display:none}
+.pwbox{background:#f6f8fb;border:1px dashed #b7c6da;border-radius:10px;padding:14px;text-align:center;margin:10px 0}
+.pwbox code{font-size:22px;letter-spacing:.06em;font-weight:700;color:var(--brand)}
+.small{font-size:12.5px;color:var(--muted)}
+textarea{min-height:150px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+.res{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+.res table{min-width:0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1d2939;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;display:none;z-index:60}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.search{min-width:0;flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="logo"><img src="group-logo.png" alt="The Bharat Steel Group"></span>
+    <h1>Settings · Users</h1>
+    <a class="ghost" href="index.html">Home</a>
+    <button class="ghost" type="button" onclick="BSG_logout()">Sign out</button>
+  </div>
+
+  <div class="bar">
+    <div class="tabs" id="tabs">
+      <button type="button" data-c="bsc" class="on">Bharat Steel <small id="n-bsc"></small></button>
+      <button type="button" data-c="crayon">Crayon <small id="n-crayon"></small></button>
+    </div>
+    <div class="spacer"></div>
+    <input class="search" id="q" placeholder="Search name, Emp No, mobile...">
+    <button class="btn sec" type="button" id="importBtn">Import CSV</button>
+    <button class="btn" type="button" id="addBtn">+ Add user</button>
+  </div>
+
+  <div class="card"><table>
+    <thead><tr><th>Emp No</th><th>Name</th><th>Designation</th><th>Dept</th><th>Mobile</th><th>Admin</th><th>Insights</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="10" class="empty">Loading...</td></tr></tbody>
+  </table></div>
+  <p class="note">Only admins can see this page. <b>Admin</b> = can open Settings and use every trainer. <b>Insights</b> = can open Customer Insights. New users and password resets get a one-time password; they choose their own at first login.</p>
+</div>
+
+<!-- add / edit -->
+<div class="ov" id="ovEdit"><div class="modal">
+  <div class="mh"><b id="eTitle">Add user</b><button type="button" data-close>&times;</button></div>
+  <div class="mb">
+    <div class="err" id="eErr"></div>
+    <div class="grid">
+      <div class="f"><label>Emp No *</label><input id="eEmp" placeholder="BSC/120"></div>
+      <div class="f"><label>Company *</label><select id="eCo"><option value="bsc">Bharat Steel (BSC)</option><option value="crayon">Crayon</option></select></div>
+      <div class="f full"><label>Name *</label><input id="eName"></div>
+      <div class="f"><label>Designation</label><input id="eDes"></div>
+      <div class="f"><label>Department</label><input id="eDept" list="depts"></div>
+      <div class="f"><label>Mobile</label><input id="eMob" inputmode="tel" placeholder="9876543210"></div>
+      <div class="f"><label>Access</label><div class="checks">
+        <label><input type="checkbox" id="eAdmin"> Admin</label>
+        <label><input type="checkbox" id="eIns"> Customer Insights</label></div></div>
+    </div>
+    <datalist id="depts"><option>Sales</option><option>Marketing</option><option>Management</option><option>Accounts</option><option>HR</option><option>Production</option><option>Dispatch</option><option>Purchase</option><option>IT</option></datalist>
+  </div>
+  <div class="mf"><button class="btn sec" type="button" data-close>Cancel</button><button class="btn" type="button" id="eSave">Save</button></div>
+</div></div>
+
+<!-- one-time password -->
+<div class="ov" id="ovPw"><div class="modal">
+  <div class="mh"><b id="pTitle">Login details</b><button type="button" data-close>&times;</button></div>
+  <div class="mb">
+    <div id="pWho" class="small"></div>
+    <div class="pwbox"><div class="small">One-time password</div><code id="pPw"></code></div>
+    <p class="small">This password is shown only now. Share it with the user; they will set their own password at first login.</p>
+  </div>
+  <div class="mf">
+    <button class="btn sec" type="button" id="pCopy">Copy message</button>
+    <a class="btn" id="pWa" target="_blank" rel="noopener" style="text-decoration:none">Send on WhatsApp</a>
+  </div>
+</div></div>
+
+<!-- import -->
+<div class="ov" id="ovImp"><div class="modal wide">
+  <div class="mh"><b>Import users from CSV</b><button type="button" data-close>&times;</button></div>
+  <div class="mb">
+    <div class="err" id="iErr"></div>
+    <p class="small" style="margin-top:0">Columns (first row = headers): <b>emp_no, name, designation, dept, mobile, company, admin, insights</b>.
+      company = bsc or crayon (blank = bsc); admin / insights = yes or no. Existing Emp Nos are updated, new ones are added.</p>
+    <div class="f"><input type="file" id="iFile" accept=".csv,text/csv"></div>
+    <p class="small">...or paste the CSV text here:</p>
+    <textarea id="iText" placeholder="emp_no,name,designation,dept,mobile,company,admin,insights&#10;BSC/120,Varsha K,Senior Sales Executive,Sales,917448468474,bsc,no,no"></textarea>
+    <div id="iRes"></div>
+  </div>
+  <div class="mf"><button class="btn sec" type="button" data-close>Close</button><button class="btn" type="button" id="iGo">Import</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var company = 'bsc', users = [], counts = {}, myEmp = '', editing = null, lastPwMsg = '';
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function toast(t) { var e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(e._t); e._t = setTimeout(function () { e.style.display = 'none'; }, 2600); }
+function api(path, data) {
+  var o = { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
+  if (data !== undefined) { o.method = 'POST'; o.body = JSON.stringify(data); }
+  return fetch(path, o).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+}
+function fmtTime(t) { if (!t) return '<span class="small">Never</span>'; var d = new Date(t);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); }
+function waNum(m) { m = String(m || '').replace(/\D/g, ''); return m.length === 10 ? '91' + m : m; }
+
+function load() {
+  api('/api/users?company=all').then(function (j) {
+    users = j.users; counts = j.counts || {}; myEmp = j.me;
+    $('n-bsc').textContent = counts.bsc || 0; $('n-crayon').textContent = counts.crayon || 0;
+    draw();
+  }).catch(function (e) { $('rows').innerHTML = '<tr><td colspan="10" class="empty">' + esc(e.message) + '</td></tr>'; });
+}
+function draw() {
+  var term = $('q').value.trim().toLowerCase();
+  var list = users.filter(function (u) {
+    if (u.company !== company) return false;
+    if (!term) return true;
+    return [u.emp_no, u.name, u.designation, u.dept, u.mobile].join(' ').toLowerCase().indexOf(term) !== -1;
+  });
+  if (!list.length) {
+    $('rows').innerHTML = '<tr><td colspan="10" class="empty">' + (term ? 'No users match your search.' :
+      (company === 'crayon' ? 'No Crayon users yet. Use + Add user or Import CSV with company = crayon.' : 'No users yet.')) + '</td></tr>';
+    return;
+  }
+  $('rows').innerHTML = list.map(function (u) {
+    var st = u.active ? '<span class="st-on">Active</span>' + (u.must_change ? '<span class="st-new">Not logged in yet</span>' : '')
+                      : '<span class="st-off">Inactive</span>';
+    var me = u.emp_no === myEmp;
+    return '<tr class="' + (u.active ? '' : 'off') + '">' +
+      '<td class="emp">' + esc(u.emp_no) + '</td><td>' + esc(u.name) + (me ? ' <span class="pill">You</span>' : '') + '</td>' +
+      '<td>' + esc(u.designation) + '</td><td>' + esc(u.dept) + '</td><td class="num">' + esc(u.mobile) + '</td>' +
+      '<td>' + (u.is_admin ? '<span class="pill yes">Yes</span>' : '—') + '</td>' +
+      '<td>' + (u.can_insights ? '<span class="pill yes">Yes</span>' : '—') + '</td>' +
+      '<td>' + st + '</td><td class="num">' + fmtTime(u.last_login) + '</td>' +
+      '<td class="acts"><button type="button" data-a="edit" data-e="' + esc(u.emp_no) + '">Edit</button>' +
+      '<button type="button" data-a="reset" data-e="' + esc(u.emp_no) + '">Reset PW</button>' +
+      (me ? '' : (u.active ? '<button type="button" class="danger" data-a="off" data-e="' + esc(u.emp_no) + '">Deactivate</button>'
+                           : '<button type="button" class="good" data-a="on" data-e="' + esc(u.emp_no) + '">Activate</button>')) +
+      '</td></tr>';
+  }).join('');
+}
+
+/* ---- modals ---- */
+function open(id) { $(id).classList.add('open'); }
+function close(id) { $(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function () { b.closest('.ov').classList.remove('open'); }; });
+document.querySelectorAll('.ov').forEach(function (o) { o.addEventListener('mousedown', function (e) { if (e.target === o) o.classList.remove('open'); }); });
+
+function showErr(id, t) { var e = $(id); e.textContent = t || ''; e.style.display = t ? 'block' : 'none'; }
+function openEdit(u) {
+  editing = u || null; showErr('eErr');
+  $('eTitle').textContent = u ? 'Edit user' : 'Add user';
+  $('eEmp').value = u ? u.emp_no : ''; $('eEmp').disabled = !!u;
+  $('eCo').value = u ? u.company : company;
+  $('eName').value = u ? u.name : ''; $('eDes').value = u ? u.designation : ''; $('eDept').value = u ? u.dept : '';
+  $('eMob').value = u ? u.mobile : ''; $('eAdmin').checked = u ? u.is_admin : false; $('eIns').checked = u ? u.can_insights : false;
+  open('ovEdit'); setTimeout(function () { (u ? $('eName') : $('eEmp')).focus(); }, 50);
+}
+$('addBtn').onclick = function () { openEdit(null); };
+$('eSave').onclick = function () {
+  var d = { emp_no: $('eEmp').value, company: $('eCo').value, name: $('eName').value, designation: $('eDes').value,
+            dept: $('eDept').value, mobile: $('eMob').value, is_admin: $('eAdmin').checked, can_insights: $('eIns').checked, is_new: !editing };
+  var b = $('eSave'); b.disabled = true;
+  api('/api/users?action=save', d).then(function (j) {
+    close('ovEdit'); load();
+    if (j.temp_password) showPw({ emp_no: j.emp_no, name: d.name, mobile: d.mobile, temp_password: j.temp_password }, 'User added');
+    else toast('Saved');
+  }).catch(function (e) { showErr('eErr', e.message); }).then(function () { b.disabled = false; });
+};
+
+function welcomeText(u) {
+  return 'Hi ' + (u.name || '') + ',\n\nYour login for the BSG Sales AI Suite:\n' + location.origin + '\n\nEmp No: ' + u.emp_no +
+         '\nOne-time password: ' + u.temp_password + '\n\nYou will be asked to set your own password when you sign in.';
+}
+function showPw(u, title) {
+  $('pTitle').textContent = title || 'Login details';
+  $('pWho').innerHTML = '<b>' + esc(u.name || '') + '</b> · ' + esc(u.emp_no) + (u.mobile ? ' · ' + esc(u.mobile) : '');
+  $('pPw').textContent = u.temp_password;
+  lastPwMsg = welcomeText(u);
+  var n = waNum(u.mobile);
+  $('pWa').href = 'https://wa.me/' + n + '?text=' + encodeURIComponent(lastPwMsg);
+  $('pWa').style.display = n ? '' : 'none';
+  open('ovPw');
+}
+$('pCopy').onclick = function () { copy(lastPwMsg); };
+function copy(t) {
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Copied'); }, function () {
+    var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    try { document.execCommand('copy'); toast('Copied'); } catch (e) {} a.remove(); });
+}
+
+$('rows').onclick = function (e) {
+  var b = e.target.closest('button[data-a]'); if (!b) return;
+  var emp = b.getAttribute('data-e'), a = b.getAttribute('data-a');
+  var u = users.filter(function (x) { return x.emp_no === emp; })[0]; if (!u) return;
+  if (a === 'edit') return openEdit(u);
+  if (a === 'reset') {
+    if (!confirm('Reset the password for ' + u.name + ' (' + u.emp_no + ')?\nTheir old password stops working and they are signed out.')) return;
+    return api('/api/users?action=reset', { emp_no: emp }).then(function (j) { showPw(j, 'New one-time password'); load(); })
+      .catch(function (e) { alert(e.message); });
+  }
+  if (a === 'off' && !confirm('Deactivate ' + u.name + '? They will be signed out and cannot log in.')) return;
+  api('/api/users?action=active', { emp_no: emp, active: a === 'on' }).then(function () { toast(a === 'on' ? 'Activated' : 'Deactivated'); load(); })
+    .catch(function (e) { alert(e.message); });
+};
+
+$('tabs').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  company = b.getAttribute('data-c');
+  document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
+  draw();
+};
+$('q').oninput = draw;
+
+/* ---- CSV import ---- */
+function parseCSV(text) {
+  var rows = [], row = [], f = '', q = false;
+  text = String(text || '').replace(/^﻿/, '');
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',' || c === '\t' || c === ';') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); f = ''; if (row.join('').trim()) rows.push(row); row = []; }
+    else f += c;
+  }
+  row.push(f); if (row.join('').trim()) rows.push(row);
+  if (rows.length < 2) return [];
+  var alias = { empno: 'emp_no', emp: 'emp_no', employeeno: 'emp_no', employeeid: 'emp_no', id: 'emp_no', department: 'dept', phone: 'mobile',
+                mobileno: 'mobile', isadmin: 'admin', canInsights: 'insights', caninsights: 'insights', customerinsights: 'insights' };
+  var head = rows[0].map(function (h) { var k = h.trim().toLowerCase().replace(/[^a-z_]/g, ''); var kk = k.replace(/_/g, ''); return alias[kk] || k; });
+  return rows.slice(1).map(function (r) { var o = {}; head.forEach(function (h, i) { o[h] = (r[i] || '').trim(); }); return o; });
+}
+$('importBtn').onclick = function () { showErr('iErr'); $('iRes').innerHTML = ''; $('iText').value = ''; $('iFile').value = ''; open('ovImp'); };
+$('iFile').onchange = function () {
+  var f = this.files[0]; if (!f) return;
+  var r = new FileReader(); r.onload = function () { $('iText').value = r.result; }; r.readAsText(f);
+};
+var lastImport = [];
+$('iGo').onclick = function () {
+  showErr('iErr');
+  var rows = parseCSV($('iText').value);
+  if (!rows.length) return showErr('iErr', 'Nothing to import. Choose a CSV file or paste the rows (with the header row first).');
+  if (!('emp_no' in rows[0]) || !('name' in rows[0])) return showErr('iErr', 'The header row needs at least emp_no and name columns.');
+  var b = $('iGo'); b.disabled = true; b.textContent = 'Importing...';
+  api('/api/users?action=import', { rows: rows }).then(function (j) {
+    lastImport = j.created || [];
+    var h = '<p><b>' + j.created.length + '</b> added, <b>' + j.updated.length + '</b> updated' + (j.skipped.length ? ', <b>' + j.skipped.length + '</b> skipped' : '') + '.</p>';
+    if (j.skipped.length) h += '<p class="small">Skipped: ' + j.skipped.map(function (s) { return esc(s.emp_no) + ' (' + esc(s.reason) + ')'; }).join(', ') + '</p>';
+    if (lastImport.length) {
+      h += '<p class="small">One-time passwords for the new users (shown only now). Send each one on WhatsApp, or download the list.</p>' +
+        '<p><button class="btn sec" type="button" id="iDl">Download list (CSV)</button></p><div class="res"><table><thead><tr><th>Emp No</th><th>Name</th><th>One-time password</th><th></th></tr></thead><tbody>' +
+        lastImport.map(function (u, i) { var n = waNum(u.mobile);
+          return '<tr><td class="emp">' + esc(u.emp_no) + '</td><td>' + esc(u.name) + '</td><td class="emp">' + esc(u.temp_password) + '</td><td class="acts">' +
+            (n ? '<a href="https://wa.me/' + n + '?text=' + encodeURIComponent(welcomeText(u)) + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</td></tr>'; }).join('') +
+        '</tbody></table></div>';
+    }
+    $('iRes').innerHTML = h;
+    var dl = $('iDl'); if (dl) dl.onclick = function () {
+      var csv = 'emp_no,name,mobile,one_time_password\n' + lastImport.map(function (u) { return [u.emp_no, '"' + u.name.replace(/"/g, '""') + '"', u.mobile, u.temp_password].join(','); }).join('\n');
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'new-user-passwords.csv'; a.click();
+    };
+    load();
+  }).catch(function (e) { showErr('iErr', e.message); }).then(function () { b.disabled = false; b.textContent = 'Import'; });
+};
+
+document.addEventListener('bsg:user', load);
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
 {
   "name": "crayon-sales-guru",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Crayon Sales Guru - shareable Tamil sales trainer web app"
+  "description": "Crayon Sales Guru - shareable Tamil sales trainer web app",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
 }

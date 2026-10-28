@@ -2,6 +2,8 @@
 // Knowledge bases live in ../kb/*.json and are refreshed weekly by the automation
 // (see WEEKLY_AUTOMATION_SETUP.md) — this file does not need editing when they update.
 
+const A = require("../lib/auth");
+
 const KB = {
   bsc: require("../kb/bsc.json").kb,
   crayon: require("../kb/crayon.json").kb,
@@ -32,6 +34,8 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: "Use POST" });
     return;
   }
+  const user = await A.requireUser(req, res);   // must be logged in
+  if (!user) return;
   const key = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
   if (!key) {
     res.status(500).json({ error: "Server is missing GEMINI_API_KEY. Add it in Vercel > Settings > Environment Variables, then redeploy." });
@@ -48,6 +52,10 @@ module.exports = async (req, res) => {
     const company = String(body?.company || "crayon").toLowerCase();
     if (!KB[company]) {
       res.status(400).json({ error: "Unknown company '" + company + "'. Use bsc or crayon." });
+      return;
+    }
+    if (!user.is_admin && user.company !== company) {   // BSC users -> BSC trainer only (admins: all)
+      res.status(403).json({ error: "You don't have access to the " + (company === "bsc" ? "BSC" : "Crayon") + " trainer." });
       return;
     }
     const history = Array.isArray(body?.messages) ? body.messages.slice(-16) : [];

@@ -5,6 +5,8 @@
 //   ../data/calls_<company>.json      (compact per-call digest, no phone numbers)
 // Needs Vercel env var ANTHROPIC_API_KEY (optional CHAT_MODEL, default claude-sonnet-5).
 
+const A = require("../lib/auth");
+
 const AGG = {
   bsc: require("../data/analytics_bsc.json"),
   crayon: require("../data/analytics_crayon.json"),
@@ -77,6 +79,8 @@ async function callClaude(key, body) {
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
+  const user = await A.requireUser(req, res, { insights: true });   // login + Customer Insights access
+  if (!user) return;
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(500).json({ error: "Server is missing ANTHROPIC_API_KEY. Add it in Vercel > Settings > Environment Variables, then redeploy." });
 
