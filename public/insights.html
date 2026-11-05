@@ -274,6 +274,11 @@ function show(d){
 function render(d){
   var body=document.getElementById('body');body.innerHTML='';
   document.getElementById('meta').textContent=d.generated_at?('Updated '+fmtDate(d.generated_at)+' · '+(d.new_this_run||0)+' new calls in the last run'):'';
+  var meta=document.getElementById('meta'); meta.style.color=''; meta.style.fontWeight='';
+  if(d.generated_at){var age=Math.floor((new Date().setHours(0,0,0,0)-new Date(d.generated_at+'T00:00:00'))/864e5);
+    if(age>=2){meta.textContent='⚠ Last updated '+fmtDate(d.generated_at)+' ('+age+' days ago) — the daily update has not run since'+
+      ((window.BSG_USER&&window.BSG_USER.is_admin)?'. Check automation\\logs\\run_history.txt on the server.':'. Please inform the admin.');
+      meta.style.color='#b54708';meta.style.fontWeight='600';}}
   if(!d.total_calls){body.innerHTML='<div class="empty" style="margin-top:14px">No analysed sales calls yet for '+(rep?rep+' ('+NAME[company]+')':NAME[company])+'.'+(rep?' Calls appear here once they are sorted by rep.':'')+'</div>';return;}
   var N=d.total_calls, V=d.v2_calls||0, o=d.outcomes||{}, s=d.sentiment||{}, cs=d.call_satisfaction||{}, pr=d.price_reaction||{};
   var won=(o.order||0)+(o.interested||0), winPct=pct(won,N);
