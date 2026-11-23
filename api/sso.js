@@ -62,6 +62,13 @@ module.exports = async (req, res) => {
     }
     await A.q("UPDATE sales_users SET failed=0, locked_until=NULL, last_login=now() WHERE emp_no=$1", [user.emp_no]);
     A.setSession(req, res, user);
+    if (String((req.query && req.query.embed) || "") === "1") {
+      // Opened in a tab inside the group hub: the browser only keeps a SameSite=None + Partitioned cookie
+      // there, sent only while the hub is the page around this app (no other site can use it).
+      let c = String(res.getHeader("Set-Cookie") || "").replace("SameSite=Lax", "SameSite=None; Partitioned");
+      if (!/;\s*Secure/i.test(c)) c += "; Secure";
+      res.setHeader("Set-Cookie", c);
+    }
     const next = String((req.query && req.query.next) || "");
     res.statusCode = 303;
     res.setHeader("Location", next.startsWith("/") && !next.startsWith("//") ? next : "/");
