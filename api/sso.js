@@ -51,7 +51,16 @@ module.exports = async (req, res) => {
     await A.ensureTables();
     const ident = String(claims.emp_no || claims.sub || "").trim();
     const key = ident.includes("@") ? "" : A.empKey(ident);
-    const u = key ? (await A.q("SELECT * FROM sales_users WHERE emp_key=$1", [key]))[0] : null;
+    let u = key ? (await A.q("SELECT * FROM sales_users WHERE emp_key=$1", [key]))[0] : null;
+    if (!u && key) {
+      // First visit from the group hub: the hub has already checked this person may open Sales AI Suite,
+      // so create their account here as a normal user (no admin, no insights). An admin can raise it later.
+      const co = String(claims.company || "").toUpperCase() === "CRAYON" ? "crayon" : "bsc";
+      u = (await A.q(`INSERT INTO sales_users (emp_no, emp_key, name, company, pw_hash, must_change)
+                      VALUES ($1, $2, $3, $4, $5, FALSE) ON CONFLICT DO NOTHING RETURNING *`,
+                     [A.normEmp(ident), key, String(claims.name || ""), co, A.hashPw(crypto.randomBytes(24).toString("hex"))]))[0]
+          || (await A.q("SELECT * FROM sales_users WHERE emp_key=$1", [key]))[0];
+    }
     if (!u || !u.active)
       return page(res, 403, "Your group account is not linked to a Sales AI Suite user. Ask an admin to add your Emp No here, or set it in the group portal.");
     let user = u;
