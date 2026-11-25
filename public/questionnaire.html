@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Call Questionnaire</title>
+<script src="guard.js" data-need="insights"></script>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f3f5f9; --surface:#ffffff; --surface-2:#f8f9fb;
+  --ink:#121417; --ink-2:#4b5361; --muted:#8a919c; --line:#e4e8ef;
+  --brand:#14325c; --brand-2:#1f4e8c; --s1:#2a78d6; --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Latha",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--brand);color:#fff;border-radius:var(--radius);padding:12px 16px}
+.top .logo{background:#fff;border-radius:8px;padding:4px 8px;display:inline-flex}
+.top .logo img{height:26px;display:block}
+.top h1{margin:0;font-size:18px;font-weight:600;flex:1;min-width:160px}
+.btn{border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer;text-decoration:none}
+.btn:hover{background:rgba(255,255,255,.24)}
+.lang{display:flex;background:rgba(255,255,255,.14);border-radius:999px;padding:3px}
+.lang button{border:0;background:none;color:#fff;font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.lang button.on{background:#fff;color:var(--brand);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-top:14px}
+.lead{font-size:15px;margin:0 0 10px}
+.gaps{width:100%;border-collapse:collapse;font-size:13px}
+.gaps th,.gaps td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+.gaps th{color:var(--muted);font-weight:600;font-size:12px}
+.gaps td.n{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.note{color:var(--ink-2);font-size:13px;margin:10px 0 0}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.nav a{background:var(--surface);border:1px solid var(--line);color:var(--brand);text-decoration:none;font-size:12.5px;padding:6px 12px;border-radius:999px}
+.nav a:hover{border-color:var(--brand)}
+h2{margin:0;font-size:16px;color:var(--brand)}
+.stage-num{display:inline-block;background:var(--brand);color:#fff;border-radius:999px;font-size:11.5px;font-weight:600;padding:2px 9px;margin-right:8px;vertical-align:2px}
+.intro{color:var(--ink-2);margin:6px 0 4px}
+.q{display:grid;grid-template-columns:44px 1fr;gap:4px 10px;padding:12px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.qn{font-weight:700;color:var(--s1);font-size:13px;padding-top:1px}
+.en{font-weight:600;font-size:14.5px}
+.ta{font-size:14.5px;color:#1c2b45}
+.why{grid-column:2;font-size:12.5px;color:var(--muted)}
+.why b{color:var(--ink-2);font-weight:600}
+.tip{background:#eef4fd;border-left:3px solid var(--s1);border-radius:6px;padding:8px 12px;margin-top:10px;font-size:13px;color:#1c2b45}
+body.only-en .ta, body.only-ta .en{display:none}
+.check{list-style:none;padding:0;margin:8px 0 0}
+.check li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.check li:first-child{border-top:0}
+.check input{width:18px;height:18px;margin-top:2px;accent-color:var(--brand);flex:none}
+.check label{cursor:pointer}
+.foot{font-size:11.5px;color:var(--muted);text-align:center;padding:22px 8px 30px}
+@media (max-width:560px){.q{grid-template-columns:34px 1fr}.top h1{font-size:16px}}
+@media print{
+  body{background:#fff}.top .btn,.lang,.nav,.noprint{display:none!important}
+  .top{background:none;color:var(--brand);padding:0;border-bottom:2px solid var(--brand);border-radius:0}
+  .card{border:0;padding:8px 0;break-inside:avoid-page}
+  .q{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="logo"><img src="group-logo.png" alt="The Bharat Steel Group"></span>
+    <h1>BSC Sales Call Questionnaire</h1>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="both" class="on">Both</button>
+      <button type="button" data-l="en">English</button>
+      <button type="button" data-l="ta">தமிழ்</button>
+    </div>
+    <button type="button" class="btn" onclick="window.print()">Print</button>
+    <a class="btn" href="insights.html">Back to Insights</a>
+  </div>
+
+  <div class="card">
+    <p class="lead"><b>This questionnaire makes every BSC sales call capture complete, exact customer data</b>, so Customer Insights is built on facts instead of guesses. Each question asks for a specific answer that fills a field the insights track, or one they are missing today.</p>
+    <table class="gaps">
+      <thead><tr><th>Data the insights need</th><th>What the calls give today (3,634 calls)</th><th>Fixed by</th></tr></thead>
+      <tbody>
+        <tr><td>Customer type</td><td>891 calls (25%) "not clear"</td><td class="n">1.2</td></tr>
+        <tr><td>Customer town or district</td><td>Top town (Vizag) in only 104 calls; most calls name no place</td><td class="n">1.3</td></tr>
+        <tr><td>Exact product</td><td>97 calls say only "steel"</td><td class="n">2.1, 2.2</td></tr>
+        <tr><td>Quantity in tonnes</td><td>Not captured</td><td class="n">2.4</td></tr>
+        <tr><td>End use or project type</td><td>Not captured</td><td class="n">2.5</td></tr>
+        <tr><td>Competitor and their rate</td><td>Top competitor named in only 54 calls</td><td class="n">3.3, 3.4</td></tr>
+        <tr><td>Monthly volume, buying frequency</td><td>Not captured</td><td class="n">3.1, 3.2</td></tr>
+        <tr><td>Decision maker</td><td>Not captured</td><td class="n">3.5</td></tr>
+        <tr><td>How the customer found us</td><td>Not captured</td><td class="n">1.5</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px"><b>Three rules for accurate data:</b></p>
+    <ol class="note" style="margin:4px 0 0;padding-left:20px">
+      <li><b>Ask for a specific answer.</b> Offer the options ("dealer, fabricator or contractor?") instead of open questions.</li>
+      <li><b>Say names in full.</b> Product, size, grade, brand and town, never "that one" or "same as last time".</li>
+      <li><b>Repeat the answers back before ending the call</b> (5.1). The recording then holds the confirmed facts in one place, which the AI reads most accurately.</li>
+    </ol>
+  </div>
+
+  <nav class="nav" id="nav"></nav>
+  <div id="stages"></div>
+
+  <div class="card" id="checklist">
+    <h2><span class="stage-num">✓</span>Every-call data checklist</h2>
+    <p class="intro">A call has complete data when all of these were said clearly on the recording. First call with a new customer: also cover 1.5 and Stage 3. Ticks reset when you reload the page.</p>
+    <ul class="check" id="checks"></ul>
+    <p class="noprint" style="margin:10px 0 0"><button type="button" id="resetChecks" style="border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 14px;font:inherit;font-size:12.5px;cursor:pointer">Clear ticks for next call</button></p>
+  </div>
+
+  <div class="foot">Built from 3,634 analysed BSC sales calls (29 Jun to 25 Nov 2026). Review the wording with the sales team and adjust as needed.</div>
+</div>
+
+<script>
+var STAGES = [
+ { t:"Customer profile", sub:"start of every call",
+   intro:"Ask these at the start of every call with a new customer, and confirm them with a repeat customer. They decide how every other answer is grouped in the insights.",
+   q:[
+    ["May I know your name and company name?","உங்க பெயர், கம்பெனி பெயர் சொல்லுங்க சார்?","Name + company","Customer record, repeat-buyer tracking"],
+    ["Are you a dealer, fabricator, contractor, builder, or using it in your own factory?","நீங்க டீலரா, ஃபேப்ரிகேட்டரா, காண்ட்ராக்டரா, பில்டரா, இல்ல உங்க ஃபேக்டரிக்கு யூஸ் பண்றீங்களா?","Dealer / Fabricator / Contractor / Builder / Industrial buyer / End user","Conversion by customer type (cuts the 25% \"not clear\")"],
+    ["Which town and district is your business in, and where is this material going?","உங்க வியாபாரம் எந்த ஊர், எந்த மாவட்டம்? மெட்டீரியல் எந்த ஊருக்கு போகணும்?","Town + district (office) and town (delivery)","Where customers are; freight planning"],
+    ["Have you bought from Bharat Steel before?","இதுக்கு முன்னாடி Bharat Steel-ல வாங்கியிருக்கீங்களா?","New / Repeat","Repeat buyer share"],
+    ["How did you hear about us?","எங்களப் பத்தி எப்படி தெரிஞ்சுக்கிட்டீங்க?","Referral / Google / IndiaMART / WhatsApp / Existing customer / Visit / Other","New: which channels bring buyers"]
+   ]},
+ { t:"Requirement",
+   intro:"Get every item in exact terms. One complete line per item (product, size, grade, quantity, use, date) is what makes the product and demand insights reliable.",
+   q:[
+    ["Which products do you need: TMT, plate, channel, angle, beam, HR coil, sheet or pipe?","என்ன மெட்டீரியல் வேணும்: TMT, ப்ளேட், சானல், ஆங்கிள், பீம், HR காயில், ஷீட், பைப்?","Product name, never just \"steel\"","Products asked about"],
+    ["What size, thickness and length for each?","ஒவ்வொண்ணுக்கும் சைஸ், திக்னஸ், நீளம் என்ன?","e.g. 12 mm TMT; 10 mm plate 2500 x 6300; ISMC 100","Size-level demand, stock planning"],
+    ["Which grade: E250, E350, Fe500, Fe500D?","எந்த கிரேடு: E250, E350, Fe500, Fe500D?","Grade","Grade mix"],
+    ["How many tonnes in total, and how many for each item?","மொத்தம் எத்தனை டன்? ஒவ்வொண்ணும் எத்தனை டன்?","Tonnes per item","New: enquiry volume in tonnes, order size"],
+    ["What is it for: building, factory shed, fabrication job, resale, or your own production?","இது எதுக்கு: பில்டிங், ஃபேக்டரி ஷெட், ஃபேப்ரிகேஷன் வேலை, ரீசேல், இல்ல உங்க பொருள் தயாரிப்புக்கா?","Building / Shed / Fabrication / Resale / Own production","New: end use by product"],
+    ["Do you need cutting or processing?","கட்டிங் / ப்ராஸஸிங் வேணுமா?","Yes (type) / No","What they value: cutting"],
+    ["By which date must it reach you?","எந்த தேதிக்குள்ள மெட்டீரியல் வரணும்?","A date (not \"soon\")","Urgent buyers, delivery expectations"]
+   ]},
+ { t:"Buying pattern and competition", sub:"once per customer",
+   intro:"Ask these once per customer (and again every few months). They turn a single enquiry into a customer profile: how much they buy, how often, from whom, and who decides.",
+   q:[
+    ["Roughly how many tonnes of steel do you use in a month?","மாதம் சுமார் எத்தனை டன் ஸ்டீல் யூஸ் பண்றீங்க?","Tonnes per month (a number or range)","New: customer size, bulk vs small buyer"],
+    ["How often do you buy: every week, every month, or only per project?","எவ்வளவு தடவை வாங்குவீங்க: வாராவாரம், மாதாமாதம், இல்ல ப்ராஜெக்ட் வரும்போது மட்டும்?","Weekly / Monthly / Per project","New: buying frequency, repeat potential"],
+    ["Who do you buy from now, and which brand?","இப்போ யார்கிட்ட வாங்குறீங்க, எந்த பிராண்டு?","Supplier name + brand","Competitors mentioned (named in very few calls today)"],
+    ["What rate did they quote, and does it include cutting, loading and freight?","அவங்க என்ன ரேட் சொன்னாங்க? கட்டிங், லோடிங், ஃப்ரெயிட் சேர்த்தா?","Rate per tonne + what is included","New: competitor price gap by product"],
+    ["Who decides on the purchase: you, a partner, or a purchase team?","வாங்குறது யார் முடிவு பண்ணுவாங்க: நீங்களா, பார்ட்னரா, வாங்கும் டீமா?","Self / Partner / Purchase team / Owner","New: explains \"undecided\" calls"],
+    ["Apart from price, what matters most: stock, fast delivery, cutting, quality certificate or credit?","விலைய தவிர முக்கியம் என்ன: ஸ்டாக், வேகமான டெலிவரி, கட்டிங், சர்ட்டிஃபிகேட், கிரெடிட்?","Top 1 or 2 from the list","What they value besides price"]
+   ]},
+ { t:"Stock, price and terms",
+   intro:"State our side in exact figures and get a clear yes or no on each term. Vague answers here (\"rate is ok\", \"will see\") are why most price and terms data is unusable today.",
+   q:[
+    ["This size is in stock / short. If short: can I offer the nearest size, a cut piece, or part now and the balance later?","இந்த சைஸ் ஸ்டாக்கில இருக்கு / குறைவா இருக்கு. பக்கத்து சைஸ், கட் பீஸ், இல்ல இப்போ கொஞ்சம் மீதி அப்புறம், சரியாகுமா?","In stock / Short: alternative accepted / refused","Stock objection, alternative offered"],
+    ["Our rate is Rs ___ per tonne for ___, ex-yard / delivered. Shall I send it on WhatsApp now?","எங்க ரேட் ___-க்கு டன்னுக்கு Rs ___. WhatsApp-ல இப்பவே அனுப்பவா?","Rate said aloud + quote sent yes/no","Price reaction, quote sent"],
+    ["Is this rate acceptable, high, or do you need it to match another offer?","இந்த ரேட் ஓகேவா, அதிகமா, இல்ல வேற ரேட்டுக்கு மேட்ச் பண்ணணுமா?","Accepted / Too high / Must match (by how much)","Accepted our price, price as main blocker"],
+    ["Payment: advance, on delivery, or credit? If credit, how many days?","பேமெண்ட்: அட்வான்ஸ், டெலிவரியில, இல்ல கிரெடிட்? கிரெடிட்னா எத்தனை நாள்?","Advance / On delivery / Credit + days","Credit terms objection, needs credit"],
+    ["Will you send your vehicle, or should we deliver?","வண்டி நீங்க அனுப்புவீங்களா, நாங்க டெலிவரி பண்ணணுமா?","Own vehicle / Our delivery (FOR)","Transport cost objection"],
+    ["Do you need a Material Test Certificate?","Material Test Certificate வேணுமா?","Yes / No","Quality assurance, test certificate"]
+   ]},
+ { t:"Confirm and record the outcome", sub:"end of every call",
+   intro:"End every call by reading the facts back and stating one clear outcome. This is the single most useful minute for data quality: the recording then holds the confirmed answers in one place, and the outcome (order, quote, follow-up or lost) stops being guessed.",
+   q:[
+    ["Let me confirm: [company], [town], [product, size, grade], [tonnes], by [date], at Rs ___ per tonne, [payment terms]. Is that correct?","கன்ஃபர்ம் பண்ணிக்கறேன்: [கம்பெனி], [ஊர்], [மெட்டீரியல், சைஸ், கிரேடு], [டன்], [தேதி]க்குள்ள, டன்னுக்கு Rs ___, [பேமெண்ட்]. சரிதானே?","Confirmed summary","Makes every field above accurate"],
+    ["Shall I book the order now?","ஆர்டரை இப்பவே புக் பண்ணலாமா?","Ordered / Not yet","Ordered on the call"],
+    ["If not today, what is stopping you?","இன்னைக்கு இல்லனா, என்ன தடை?","Price / Stock / Delivery / Quality / Credit / Approval / Comparing quotes","Objections customers raise (the real reason, not a guess)"],
+    ["What day and time shall I call you back?","எந்த நாள், எத்தனை மணிக்கு திரும்ப கால் பண்ணட்டும்?","Day + time","Follow-up fixed (top miss today: 670 calls)"],
+    ["If you are going with another supplier, may I know why?","வேற சப்ளையர்கிட்ட வாங்குறீங்கனா, என்ன காரணம்னு தெரிஞ்சுக்கலாமா?","Lost + reason + supplier","New: lost-order reasons"]
+   ],
+   tip:"After the call: send the written quote on WhatsApp within 30 minutes, and log the follow-up date and time."}
+];
+var CHECKS = [
+ "Customer type (dealer, fabricator, contractor, builder, industrial, end user)",
+ "Town and district",
+ "Product, size and grade for each item",
+ "Quantity in tonnes",
+ "End use and required date",
+ "Our rate said aloud, and the customer's reaction (accepted, too high, must match)",
+ "Competitor and their rate, if they mentioned one",
+ "Payment terms and transport",
+ "Facts read back and confirmed (5.1)",
+ "One outcome: ordered, follow-up day and time fixed, or lost with reason"
+];
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+var html="", nav="";
+STAGES.forEach(function(st,i){
+  var n=i+1, id="stage"+n;
+  nav+='<a href="#'+id+'">'+n+'. '+esc(st.t)+'</a>';
+  html+='<div class="card" id="'+id+'"><h2><span class="stage-num">Stage '+n+'</span>'+esc(st.t)+(st.sub?' <span style="font-weight:400;color:var(--muted);font-size:13px">('+esc(st.sub)+')</span>':'')+'</h2>';
+  html+='<p class="intro">'+esc(st.intro)+'</p>';
+  st.q.forEach(function(q,j){
+    html+='<div class="q"><div class="qn">'+n+'.'+(j+1)+'</div><div><div class="en">'+esc(q[0])+'</div><div class="ta" lang="ta">'+esc(q[1])+'</div></div><div class="why"><b>Record as:</b> '+esc(q[2])+'<br><b>Feeds:</b> '+esc(q[3])+'</div></div>';
+  });
+  if(st.tip) html+='<div class="tip">'+esc(st.tip)+'</div>';
+  html+='</div>';
+});
+nav+='<a href="#checklist">✓ Data checklist</a>';
+document.getElementById("stages").innerHTML=html;
+document.getElementById("nav").innerHTML=nav;
+document.getElementById("checks").innerHTML=CHECKS.map(function(c,i){return '<li><input type="checkbox" id="c'+i+'"><label for="c'+i+'">'+esc(c)+'</label></li>';}).join("");
+document.getElementById("resetChecks").onclick=function(){document.querySelectorAll("#checks input").forEach(function(x){x.checked=false;});};
+document.querySelectorAll(".lang button").forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll(".lang button").forEach(function(x){x.classList.toggle("on",x===b);});
+    document.body.classList.remove("only-en","only-ta");
+    if(b.dataset.l!=="both") document.body.classList.add("only-"+b.dataset.l);
+    try{localStorage.setItem("bsg_q_lang",b.dataset.l);}catch(e){}
+  };
+});
+try{var L=localStorage.getItem("bsg_q_lang");if(L){var bb=document.querySelector('.lang button[data-l="'+L+'"]');if(bb)bb.click();}}catch(e){}
+</script>
+</body>
+</html>
