@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset password · Sales AI Suite</title>
+<style>
+:root{color-scheme:light;--brand:#1f4e79;--brand2:#2e6db4;--ink:#1a1f29;--muted:#5a6473;--line:#d5deea;--wa:#1f9d55}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#eef1f6;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.box{width:100%;max-width:380px;text-align:center}
+.brandbar{background:#fff;border:1px solid #e2e8f1;border-radius:16px;padding:14px 22px;display:inline-flex;box-shadow:0 2px 12px rgba(31,78,121,.10);margin-bottom:16px}
+.brandbar img{height:52px;display:block}
+h1{font-size:22px;margin:0 0 4px;color:var(--brand)}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+form{background:#fff;border:1px solid #e2e8f1;border-radius:16px;padding:22px 20px;text-align:left;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 6px;color:#2b3442}
+input{width:100%;font:inherit;font-size:15px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:14px;outline:none;background:#fff}
+input:focus{border-color:var(--brand2);box-shadow:0 0 0 3px rgba(46,109,180,.15)}
+input.otp{font-size:22px;letter-spacing:8px;text-align:center;font-variant-numeric:tabular-nums}
+button{width:100%;background:var(--brand);color:#fff;border:0;border-radius:10px;padding:12px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+button.wa{background:var(--wa)}
+button:disabled{opacity:.6}
+.msg{font-size:13px;border-radius:9px;padding:9px 11px;margin-bottom:14px;display:none}
+.msg.err{display:block;background:#fdecea;color:#8a2c20}
+.msg.ok{display:block;background:#e6f4ea;color:#1e6b34}
+.hint{font-size:12px;color:var(--muted);margin:-6px 0 14px}
+.links{margin-top:14px;font-size:13px;text-align:center}
+.links a,.linkbtn{color:var(--brand2);text-decoration:none;background:none;border:0;padding:0;width:auto;font:inherit;font-size:13px;font-weight:400;cursor:pointer}
+.linkbtn:disabled{color:var(--muted);cursor:default;opacity:1}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="brandbar"><img src="group-logo.png" alt="The Bharat Steel Group"></div>
+  <h1>Reset password</h1>
+  <p class="sub" id="sub">We will send a 6-digit code to your WhatsApp.</p>
+
+  <form id="f1" autocomplete="on">
+    <div class="msg" id="m1"></div>
+    <label for="emp">Emp No</label>
+    <input id="emp" name="username" autocomplete="username" placeholder="e.g. BSC/120" autocapitalize="characters" required>
+    <button id="b1" class="wa" type="submit">Send code on WhatsApp</button>
+    <div class="links"><a href="login.html">Back to sign in</a></div>
+  </form>
+
+  <form id="f2" class="hide" autocomplete="off">
+    <div class="msg" id="m2"></div>
+    <label for="otp">6-digit code from WhatsApp</label>
+    <input id="otp" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+    <label for="np">New password</label>
+    <input id="np" type="password" autocomplete="new-password" required>
+    <p class="hint">At least 8 characters, with letters and a number.</p>
+    <label for="np2">Confirm new password</label>
+    <input id="np2" type="password" autocomplete="new-password" required>
+    <button id="b2" type="submit">Save password and sign in</button>
+    <div class="links"><button type="button" class="linkbtn" id="resend" disabled>Resend code</button> · <a href="login.html">Back to sign in</a></div>
+  </form>
+</div>
+<script>
+function $(i){return document.getElementById(i);}
+function msg(id,t,ok){var m=$(id);m.textContent=t||'';m.className='msg'+(t?(ok?' ok':' err'):'');}
+function post(action,data){
+  return fetch('/api/forgot?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(data)})
+    .then(function(r){return r.json().catch(function(){return {error:'Server error ('+r.status+')'};});});
+}
+var timer=null;
+function countdown(sec){
+  var b=$('resend');clearInterval(timer);b.disabled=true;
+  (function tick(){ if(sec<=0){b.disabled=false;b.textContent='Resend code';clearInterval(timer);return;} b.textContent='Resend code in '+sec+'s'; sec--; })();
+  timer=setInterval(function(){ if(sec<=0){b.disabled=false;b.textContent='Resend code';clearInterval(timer);return;} b.textContent='Resend code in '+sec+'s'; sec--; },1000);
+}
+function sendCode(btn,msgId){
+  var emp=$('emp').value.trim(); if(!emp){msg(msgId,'Enter your Emp No.');return;}
+  btn.disabled=true; var old=btn.textContent; if(btn.id==='b1') btn.textContent='Sending...';
+  post('send',{emp_no:emp}).then(function(j){
+    if(!j.ok){ msg(msgId,j.error||'Could not send the code.'); if(j.wait&&btn.id==='resend') countdown(j.wait); return; }
+    $('f1').classList.add('hide'); $('f2').classList.remove('hide');
+    $('sub').textContent='Code sent to WhatsApp '+j.to+'. It is valid for '+j.minutes+' minutes.';
+    msg('m2','Code sent. Check WhatsApp on '+j.to+'.',true); $('otp').value=''; $('otp').focus(); countdown(60);
+  }).catch(function(){ msg(msgId,'Could not reach the server. Check the internet and try again.'); })
+  .finally(function(){ if(btn.id==='b1'){btn.disabled=false;btn.textContent=old;} });
+}
+$('f1').onsubmit=function(e){e.preventDefault();msg('m1','');sendCode($('b1'),'m1');};
+$('resend').onclick=function(){msg('m2','');sendCode($('resend'),'m2');};
+$('otp').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);});
+$('f2').onsubmit=function(e){
+  e.preventDefault(); msg('m2','');
+  var otp=$('otp').value.trim(), np=$('np').value, np2=$('np2').value;
+  if(!/^\d{6}$/.test(otp)) return msg('m2','Enter the 6-digit code from WhatsApp.');
+  if(np!==np2) return msg('m2','The two passwords do not match.');
+  if(np.length<8||!/[A-Za-z]/.test(np)||!/\d/.test(np)) return msg('m2','Use at least 8 characters, with letters and a number.');
+  var b=$('b2'); b.disabled=true; b.textContent='Saving...';
+  post('reset',{emp_no:$('emp').value.trim(),otp:otp,new_password:np}).then(function(j){
+    if(!j.ok){ msg('m2',j.error||'Could not reset the password.'); return; }
+    msg('m2','Password changed. Signing you in...',true);
+    setTimeout(function(){ location.replace('index.html'); },700);
+  }).catch(function(){ msg('m2','Could not reach the server. Check the internet and try again.'); })
+  .finally(function(){ b.disabled=false; b.textContent='Save password and sign in'; });
+};
+var q=new URLSearchParams(location.search).get('emp'); if(q) $('emp').value=q;
+</script>
+</body>
+</html>
