@@ -11,9 +11,13 @@ const A = require("../lib/auth");
 
 const OTP_MIN = 10, MAX_TRIES = 5, RESEND_SEC = 60, MAX_PER_HOUR = 5;
 const pick = (...names) => { for (const n of names) if (process.env[n]) return String(process.env[n]).trim(); return ""; };
-const WATI_URL = pick("WATI_API_ENDPOINT", "WATI_ENDPOINT", "WATI_API_URL", "WATI_BASE_URL", "WATI_URL")
-  .replace(/\/+$/, "").replace(/\/api\/v1$/i, "");
-const WATI_TOKEN = pick("WATI_TOKEN", "WATI_API_TOKEN", "WATI_ACCESS_TOKEN").replace(/^Bearer\s+/i, "");
+// Read both values; if they were pasted the wrong way round (token in the endpoint box), fix it here.
+let _u = pick("WATI_API_ENDPOINT", "WATI_ENDPOINT", "WATI_API_URL", "WATI_BASE_URL", "WATI_URL");
+let _t = pick("WATI_TOKEN", "WATI_API_TOKEN", "WATI_ACCESS_TOKEN");
+const looksUrl = (v) => /^https?:\/\//i.test(v);
+if (!looksUrl(_u) && looksUrl(_t)) { const x = _u; _u = _t; _t = x; }
+const WATI_URL = looksUrl(_u) ? _u.replace(/\/+$/, "").replace(/\/api\/v1$/i, "") : "";
+const WATI_TOKEN = _t.replace(/^Bearer\s+/i, "").trim();
 const TEMPLATE = pick("WATI_OTP_TEMPLATE") || "otp_password2";
 
 let _otpReady = false;
@@ -44,12 +48,18 @@ async function sendWhatsApp(number, otp) {
     e.status = 503; throw e;
   }
   const url = `${WATI_URL}/api/v1/sendTemplateMessage?whatsappNumber=${number}`;
-  const r = await fetch(url, {
+  let r;
+  try {
+  r = await fetch(url, {
     method: "POST",
     headers: { "Authorization": "Bearer " + WATI_TOKEN, "Content-Type": "application/json" },
     body: JSON.stringify({ template_name: TEMPLATE, broadcast_name: "sales_pw_reset",
                            parameters: [{ name: "1", value: otp }] }),
   });
+  } catch (err) {
+    console.error("WATI request error", err && err.message ? err.message.replace(/Bearer\s+\S+/g, "Bearer ***") : err);
+    const e = new Error("Could not reach WhatsApp right now. Please try again in a minute."); e.status = 502; throw e;
+  }
   let j = {}; try { j = await r.json(); } catch (_) {}
   if (!r.ok || j.result === false || j.validWhatsAppNumber === false) {
     console.error("WATI send failed", r.status, JSON.stringify(j).slice(0, 400));
@@ -64,7 +74,7 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const action = String((req.query && req.query.action) || "");
   try {
-    if (action === "check") return res.status(200).json({ whatsapp_ready: !!(WATI_URL && WATI_TOKEN), template: TEMPLATE });
+    if (action === "check") return res.status(200).json({ whatsapp_ready: !!(WATI_URL && WATI_TOKEN), endpoint_ok: !!WATI_URL, token_ok: !!WATI_TOKEN, template: TEMPLATE });
     if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
     if (!A.sameOrigin(req)) return res.status(403).json({ error: "Bad origin" });
     const b = A.body(req);
@@ -122,6 +132,8 @@ module.exports = async (req, res) => {
     }
     return res.status(400).json({ error: "Unknown action" });
   } catch (e) {
-    return res.status(e.status || 500).json({ error: e.message || String(e) });
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error("forgot error", e && e.message);
+    return res.status(500).json({ error: "Something went wrong. Please try again, or ask an admin." });
   }
 };
